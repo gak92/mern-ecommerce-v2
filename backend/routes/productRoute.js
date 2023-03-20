@@ -10,12 +10,12 @@ const { isUserAuthenticated } = require("../middleware/auth");
 
 const router = express.Router();
 
-router.route("/products").get(isUserAuthenticated, getAllProducts);
-router.route("/product/new").post(createProduct);
+router.route("/products").get(getAllProducts);
+router.route("/product/new").post(isUserAuthenticated, createProduct);
 router
   .route("/product/:id")
-  .put(updateProduct)
-  .delete(deleteProduct)
+  .put(isUserAuthenticated, updateProduct)
+  .delete(isUserAuthenticated, deleteProduct)
   .get(getProductDetail);
 
 module.exports = router;
