@@ -44,7 +44,7 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
   sendToken(user, 200, res);
 });
 
-// Logout User
+// =========================================== Logout User
 exports.logoutUser = catchAsyncErrors(async (req, res, next) => {
   res.cookie("token", null, {
     expires: new Date(Date.now()),
@@ -123,7 +123,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 
 });
 
-// =========================================== User Details
+// =========================================== Get User Details
 exports.getUserDetail = catchAsyncErrors( async(req, res, next) => {
   const user = await User.findById(req.user.id);
 
@@ -131,4 +131,25 @@ exports.getUserDetail = catchAsyncErrors( async(req, res, next) => {
     success: true,
     user,
   });
+});
+
+// =========================================== Update User Password
+exports.updatePassword = catchAsyncErrors( async(req, res, next) => {
+  const user = await User.findById(req.user.id).select("+password");
+
+
+  const isPasswordMatched = await user.comparePassword(req.body.oldPassword);
+  if (!isPasswordMatched) {
+    return next(new ErrorHandler("Old password is incorrect", 400));
+  }
+
+  if(req.body.newPassword !== req.body.confirmPassword) {
+    return next(new ErrorHandler("Password does not match", 400));
+  }
+
+  user.password = req.body.newPassword;
+  await user.save();
+
+  sendToken(user, 200, res);
+
 });
