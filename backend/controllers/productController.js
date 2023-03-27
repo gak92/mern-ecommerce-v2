@@ -96,11 +96,9 @@ exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
     (rev) => rev.user.toString() === req.user._id.toString()
   );
 
-
-
   if (isReviewed) {
     product.reviews.forEach((rev) => {
-      if(rev.user.toString() === req.user._id.toString()) {
+      if (rev.user.toString() === req.user._id.toString()) {
         rev.rating = rating;
         rev.comment = comment;
       }
@@ -114,28 +112,64 @@ exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
   product.reviews.forEach((rev) => {
     avg += rev.rating;
   });
-  
-  product.ratings = avg/product.reviews.length;
+
+  product.ratings = avg / product.reviews.length;
 
   await product.save({ validateBeforeSave: false });
 
   res.status(200).json({
-    success: true
+    success: true,
   });
-
 });
 
 // Get all reviews of the product
-exports.getProductReviews = catchAsyncErrors( async(req, res, next) => {
+exports.getProductReviews = catchAsyncErrors(async (req, res, next) => {
   const product = await Product.findById(req.query.id);
 
-  if(!product) {
+  if (!product) {
     return next(new ErrorHandler("Product not found", 404));
   }
 
-  res.status(200).jason({
+  res.status(200).json({
     success: true,
-    reviews: product.reviews
+    reviews: product.reviews,
+  });
+});
+
+// Delete a Review
+exports.deleteReview = catchAsyncErrors(async (req, res, next) => {
+  const product = await Product.findById(req.query.productId);
+
+  if (!product) {
+    return next(new ErrorHandler("Product not found", 404));
+  }
+
+  const reviews = product.reviews.filter(
+    (rev) => rev._id.toString() !== req.query.id.toString()
+  );
+
+  let avg = 0;
+  reviews.forEach((rev) => {
+    avg += rev.rating;
   });
 
+  const ratings = avg / reviews.length;
+  const numOfReviews = reviews.length;
+  
+  await Product.findByIdAndUpdate(req.query.productId,
+    {
+      reviews,
+      ratings,
+      numOfReviews
+    },
+    {
+      new: true,
+      runValidators:true,
+      useFindAndModify: false
+    }
+  );
+
+  res.status(200).json({
+    success: true,
+  });
 });
