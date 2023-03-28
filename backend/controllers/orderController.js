@@ -33,3 +33,43 @@ exports.newOrder = catchAsyncErrors( async(req, res, next) => {
   });
 
 });
+
+// Get Single Order
+exports.getSingleOrder = catchAsyncErrors( async(req, res, next) => {
+  const order = await Order.findById(req.params.id).populate("user", "email");
+
+  if(!order) {
+    return next(new ErrorHandler("Order not found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    order
+  });
+});
+
+// Get loggedIn User Order
+exports.myOrders = catchAsyncErrors( async(req, res, next) => {
+  const orders = await Order.find({ user: req.user._id});
+
+  res.status(200).json({
+    success: true,
+    orders
+  });
+});
+
+// Get All Orders -- Admin
+exports.getAllOrders = catchAsyncErrors( async(req, res, next) => {
+  const orders = await Order.find();
+
+  let totalAmount = 0;
+  orders.forEach((order) => {
+    totalAmount += order.totalAmount;
+  })
+
+  res.status(200).json({
+    success: true,
+    totalAmount,
+    orders
+  });
+});
